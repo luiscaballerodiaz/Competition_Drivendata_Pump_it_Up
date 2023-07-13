@@ -133,7 +133,7 @@ y_all = np.array(y_all)
 y_train = np.array(y_train)
 y_test = np.array(y_test)
 
-# Define the models parameters grid
+# Define the parameters grid for each simulated model
 gridsearch_params, estimator_model = s3.get_sim_params(sim_model, grid_sweep)
 
 if n_feats > 0:
