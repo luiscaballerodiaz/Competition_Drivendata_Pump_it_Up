@@ -367,6 +367,7 @@ def value_counts_barplot(df, feats, name='Barplot categories counts', ncolumns=5
         ax[i].set_ylabel('Frequency', fontsize=7, weight='bold')
         ax[i].set_title(feats[i], fontsize=8, weight='bold')
     fig.suptitle('Barplot value counts for categorical features', fontsize=20, weight='bold')
+    fig.tight_layout(rect=[0.025, 0.025, 0.975, 0.975])
     if show == 1:
         plt.show()
     else:

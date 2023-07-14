@@ -149,10 +149,10 @@ def cat_feat_engineering(df, fnum, min_counts=1, cats_predefined=None, feat_out=
     fcat = [i for i in df.columns.values.tolist() if i not in fnum]
     df[fcat] = df[fcat].astype('category')
 
-    if cats_predefined is None:
-        plot_name = 'Barplot categories count - training set'
+    try:
         fcat.remove('Target')
-    else:
+        plot_name = 'Barplot categories count - training set'
+    except (Exception,):
         plot_name = 'Barplot categories count - submission set'
 
     # RECORDED_BY FEATURE
