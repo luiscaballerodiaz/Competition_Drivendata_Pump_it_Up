@@ -150,10 +150,10 @@ def cat_feat_engineering(df, fnum, min_counts=1, cats_predefined=None, feat_out=
     df[fcat] = df[fcat].astype('category')
 
     if cats_predefined is None:
-        df_set = 'training'
+        plot_name = 'Barplot categories count - training set'
         fcat.remove('Target')
     else:
-        df_set = 'submission'
+        plot_name = 'Barplot categories count - submission set'
 
     # RECORDED_BY FEATURE
     feat = 'recorded_by'
@@ -235,7 +235,7 @@ def cat_feat_engineering(df, fnum, min_counts=1, cats_predefined=None, feat_out=
 
     # Reduce number of categories by grouping the categories with low occurrence
     df, fcat, cats, fout = f.reduce_categories(df, fcat, min_counts, cat_predefined=cats_predefined)
-    f.value_counts_barplot(df, fcat, df_set)
+    f.value_counts_barplot(df, fcat, name=plot_name)
 
     # IMPUTER WPT NAME per MODE MOST FREQUENT
     df['wpt_name'].fillna(pd.Series.mode(df['wpt_name']).tolist()[0], inplace=True)

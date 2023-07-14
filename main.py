@@ -19,7 +19,7 @@ sweep = GridSearchPostProcess()
 # GENERAL SETTINGS
 test_size = 0.2
 score = 'accuracy'
-load_data = 2
+load_data = 0
 # 0 --> generate cleaned dataframe, transform it and apply modeling
 # 1 --> upload cleaned dataframe, transform it and apply modeling
 # 2 --> upload transformed dataframes and apply modeling
@@ -58,7 +58,8 @@ if load_data == 0:
 
     # CSV file overview
     s1.dataframe_overview(df_train)
-    f.histogram(df_train[fnum_ini], target=df_train['Target'], name='Histogram original ')
+    f.histogram(df_train[fnum_ini], target=df_train['Target'], name='Histogram original')
+    f.scatter(df_train[fnum_ini], target=df_train['Target'])
     f.boxplot(df_train[fnum_ini], name='Boxplot original')
 
     # Numerical features engineering
@@ -142,6 +143,13 @@ if n_feats > 0:
 elif user_feats_en == 1:
     x_train, x_test = s3.user_features(x_train, x_test, user_feats)
     x_all, x_sub = s3.user_features(x_all, x_sub, user_feats)
+
+pca = PCA()
+pca_transformed = pca.fit(x_train)
+print(pca_transformed.shape)
+print(pca_transformed.components_)
+print('hola')
+print(pca_transformed.components_)
 
 print(f'X ALL SHAPE: {x_all.shape}\nY ALL SHAPE: {y_all.shape}\n')
 print(f'X SUB SHAPE: {x_sub.shape}\n')

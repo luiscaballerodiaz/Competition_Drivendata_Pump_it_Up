@@ -1,8 +1,5 @@
 import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import dendrogram
-from statsmodels.tsa.stattools import adfuller
-from statsmodels.stats.diagnostic import acorr_ljungbox
-from sklearn.metrics import mean_absolute_percentage_error
 from itertools import combinations
 import matplotlib.cm as cm
 import pandas as pd
@@ -22,6 +19,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.svm import SVC
+from sklearn.decomposition import PCA
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.preprocessing import OneHotEncoder
@@ -298,11 +296,11 @@ def new_tree_feats(x_train, x_test, y_train, combs, tree_model, min_increase=0.)
 def boxplot(df_ini, ncolumns=5, show=0, figwidth=20, figheight=10, name='Boxplot'):
     """ Plot all features in the input dataframe independently in a boxplot
     :param df_ini: input dataframe
-    :param ncolumns: number of columns in the plot
+    :param ncolumns: each feature is individually plot, and ncolumns define the number of plots in a row
     :param show: if 1 it is showed and if 0 it is saved in a file
     :param figwidth: plot width
     :param figheight: plot height
-    :param name: name of the file
+    :param name: string name to save the png file when show=0
     :return:
     """
     df = df_ini.copy().dropna()
@@ -336,7 +334,18 @@ def boxplot(df_ini, ncolumns=5, show=0, figwidth=20, figheight=10, name='Boxplot
         plt.close()
 
 
-def value_counts_barplot(df, feats, df_set, ncolumns=5, show=0, figwidth=20, figheight=10):
+def value_counts_barplot(df, feats, name='Barplot categories counts', ncolumns=5, show=0, figwidth=20, figheight=10):
+    """ Create an occurrence plot individually for each feature in feats in the input dataframe indicating the number
+    of occurrences for each category in the feature.
+    :param df: initial dataframe
+    :param feats: list of categorical features to apply the reduction
+    :param name: string name to save the png file when show=0
+    :param ncolumns: each feature is individually plot, and ncolumns define the number of plots in a row
+    :param show: if 1 it is showed and if 0 it is saved in a file
+    :param figwidth: plot width
+    :param figheight: plot height
+    :return:
+    """
     if isinstance(df, pd.Series):
         df = df.to_frame()
         ncolumns = 2
@@ -361,12 +370,24 @@ def value_counts_barplot(df, feats, df_set, ncolumns=5, show=0, figwidth=20, fig
     if show == 1:
         plt.show()
     else:
-        plt.savefig('Barplot counts ' + df_set + '.png', bbox_inches='tight')
+        plt.savefig(name + '.png', bbox_inches='tight')
         plt.close()
 
 
 def histogram(df_ini, norm=False, target=None, nbins=15, ncolumns=5, show=0, figwidth=20, figheight=10,
               name='Histogram'):
+    """ Plot all features in the input dataframe in a histogram independently
+    :param df_ini: input dataframe with numerical features
+    :param norm: histogram is normalized when True
+    :param target: series target
+    :param nbins: histogram number of bins
+    :param ncolumns: each feature is individually plot, and ncolumns define the number of plots in a row
+    :param show: plot is showed when show=1, and it is saved to png file when show=0
+    :param figwidth: figure width
+    :param figheight: figure height
+    :param name: string name to save the png file when show=0
+    :return:
+    """
     df = df_ini.copy().dropna()
     nbins = max([nbins, 2])
     if isinstance(df, pd.Series):
@@ -411,7 +432,17 @@ def histogram(df_ini, norm=False, target=None, nbins=15, ncolumns=5, show=0, fig
         plt.close()
 
 
-def scatter(df_ini, target, ncolumns=5, show=0, figwidth=20, figheight=10):
+def scatter(df_ini, target, ncolumns=5, show=0, figwidth=20, figheight=10, name='Scatter'):
+    """ Plot all features in the input dataframe in a scatter plot independently
+    :param df_ini: input dataframe with numerical features
+    :param target: series target
+    :param ncolumns: each feature is individually plot, and ncolumns define the number of plots in a row
+    :param show: plot is showed when show=1, and it is saved to png file when show=0
+    :param figwidth: figure width
+    :param figheight: figure height
+    :param name: string name to save the png file when show=0
+    :return:
+    """
     df = df_ini.copy().dropna()
     if isinstance(df, pd.Series):
         df = df.to_frame()
@@ -428,21 +459,30 @@ def scatter(df_ini, target, ncolumns=5, show=0, figwidth=20, figheight=10):
             fig.delaxes(axes[math.ceil(len(feats) / ncolumns) - 1, axis])
     ax = axes.ravel()
     for i in range(len(feats)):
-        ax[i].scatter(df.loc[:, feats[i]], df.loc[:, target])
+        ax[i].scatter(df.loc[:, feats[i]], target)
         ax[i].grid(visible=True)
         ax[i].tick_params(axis='both', labelsize=10)
         ax[i].set_xlabel(feats[i], fontsize=10, weight='bold')
-        ax[i].set_ylabel(target, fontsize=10, weight='bold')
+        ax[i].set_ylabel(target.name, fontsize=10, weight='bold')
     fig.suptitle('Scatter per each feature vs target', fontsize=20, weight='bold')
     fig.tight_layout(rect=[0.025, 0.025, 0.975, 0.975])
     if show == 1:
         plt.show()
     else:
-        plt.savefig('Scatter.png', bbox_inches='tight')
+        plt.savefig(name + '.png', bbox_inches='tight')
         plt.close()
 
 
-def timeplot(df_ini, ncolumns=5, show=0, figwidth=20, figheight=10):
+def timeplot(df_ini, ncolumns=5, show=0, figwidth=20, figheight=10, name='Timeplot'):
+    """ Plot all features in the input dataframe in a timeplot plot independently
+    :param df_ini: input dataframe with numerical features
+    :param ncolumns: each feature is individually plot, and ncolumns define the number of plots in a row
+    :param show: plot is showed when show=1, and it is saved to png file when show=0
+    :param figwidth: figure width
+    :param figheight: figure height
+    :param name: string name to save the png file when show=0
+    :return:
+    """
     df = df_ini.copy().dropna()
     if isinstance(df, pd.Series):
         df = df.to_frame()
@@ -469,15 +509,29 @@ def timeplot(df_ini, ncolumns=5, show=0, figwidth=20, figheight=10):
     if show == 1:
         plt.show()
     else:
-        plt.savefig('Timeplot.png', bbox_inches='tight')
+        plt.savefig(name + '.png', bbox_inches='tight')
         plt.close()
 
 
 def create_preprocess(pre, index_num):
+    """ Create preprocess in a pipeline gridsearch among normalization, standardization and polynomial features.
+    Note the preprocess technique is only applied in the indexes in the index_num list using ColumnTransformer
+    :param pre: input preprocessor string name (norm, std or poly)
+    :param index_num: list of feature indexes to apply the preprocess technique. If -1, it applies to all features
+    :return:
+    """
     if 'norm' in pre.lower():
-        preprocess = ColumnTransformer(transformers=[('scaling', MinMaxScaler(), index_num)], remainder='passthrough')
+        if index_num == -1:
+            preprocess = MinMaxScaler()
+        else:
+            preprocess = ColumnTransformer(transformers=[('scaling', MinMaxScaler(), index_num)],
+                                           remainder='passthrough')
     elif 'std' in pre.lower():
-        preprocess = ColumnTransformer(transformers=[('scaling', StandardScaler(), index_num)], remainder='passthrough')
+        if index_num == -1:
+            preprocess = StandardScaler()
+        else:
+            preprocess = ColumnTransformer(transformers=[('scaling', StandardScaler(), index_num)],
+                                           remainder='passthrough')
     elif 'poly' in pre.lower():
         preprocess = PolynomialFeatures(degree=2, include_bias=False, interaction_only=True)
     else:
@@ -487,6 +541,10 @@ def create_preprocess(pre, index_num):
 
 
 def create_model(algorithm):
+    """ Create model in a pipeline gridsearch among different machine learning algorithms.
+    :param algorithm: model string name (knn, logreg, linearsvc, svm, tree, random...)
+    :return:
+    """
     if 'knn' in algorithm.lower():
         model = KNeighborsClassifier()
     elif 'logistic' in algorithm.lower() or 'logreg' in algorithm.lower():
@@ -519,8 +577,14 @@ def create_model(algorithm):
     return model
 
 
-def decode_gridsearch_params(params_ini, index_num):
-    """Assess the input grid search params defined by the user and transform them to the official sklearn estimators"""
+def decode_gridsearch_params(params_ini, index_num=-1):
+    """ Decode the string parameter grid input dictionary to generate the real sklearn models to accept fit/transform methods.
+    It does not affect to hyperparameters, only to decode string estimators to real sklearn models. It assumes the grid
+    parameter has a first step to "preprocess" and a second step to "estimator", so other steps are ignored.
+    :param params_ini: the string parameter grid input dictionary
+    :param index_num: list of feature indexes to apply the preprocess technique. If -1, it applies to all features
+    :return:
+    """
     params = params_ini.copy()
     for i in range(len(params)):
         model = []
@@ -535,6 +599,15 @@ def decode_gridsearch_params(params_ini, index_num):
 
 
 def correlation_analysis(df, target, min_corr=0., method='pearson'):
+    """ Calculates the correlation coefficient per each non-categorical feature in the input dataframe (categorical
+    features are ignored)
+    :param df: input dataframe
+    :param target: series target
+    :param min_corr: minimum acceptable correlation coefficient. The features with lower values will be grouped together
+    in a list and returned (user might want to remove them)
+    :param method: correlation coefficient method (default is person, but kendall and spearman are also accepted)
+    :return:
+    """
     correlation = []
     to_drop = []
     feats = []
@@ -557,6 +630,16 @@ def correlation_analysis(df, target, min_corr=0., method='pearson'):
 
 
 def v_cramer_function(df_ini, target, v_cramer_min=0, print_data=True):
+    """ Calculates the V-Cramer coefficient per each feature in the input dataframe. V-Cramer statistics requires
+    categorical features, but the function calculates the statistic for both numerical and categorical features by
+    applying a binning technique if the feature is non-categorical.
+    :param df_ini: input dataframe
+    :param target: series target
+    :param v_cramer_min: minimum acceptable V-Cramer coefficient. The features with lower values will be grouped
+    together in a list and returned (user might want to remove them)
+    :param print_data: when True returns V-Cramer calculations
+    :return:
+    """
     df = df_ini.copy()
     feats = df.columns.values.tolist()
     cramer = np.zeros([len(feats)])
@@ -576,7 +659,16 @@ def v_cramer_function(df_ini, target, v_cramer_min=0, print_data=True):
     return vcramer, list_to_drop
 
 
-def plot_pca_breakdown(pca, list_features, show=0, figwidth=20, figheight=10):
+def plot_pca_breakdown(pca, list_features, show=0, figwidth=20, figheight=10, name='PCA breakdown'):
+    """ Plot the weight of each initial feature in each principal component
+    :param pca: PCA matrix already transformed
+    :param list_features: list with the feature names
+    :param show: plot is showed when show=1, and it is saved to png file when show=0
+    :param figwidth: figure width
+    :param figheight: figure height
+    :param name: string name to save the png file when show=0
+    :return:
+    """
     ncomps = pca.components_.shape[0]
     nfeats = pca.components_.shape[1]
     fig, ax = plt.subplots(figsize=(figwidth, figheight))
@@ -599,11 +691,19 @@ def plot_pca_breakdown(pca, list_features, show=0, figwidth=20, figheight=10):
     if show == 1:
         plt.show()
     else:
-        plt.savefig('PCA breakdown.png', bbox_inches='tight')
+        plt.savefig(name + '.png', bbox_inches='tight')
         plt.close()
 
 
-def plot_pca_scree(pca, show=0, figwidth=20, figheight=10):
+def plot_pca_scree(pca, show=0, figwidth=20, figheight=10, name='PCA scree plot'):
+    """ Plot the PCA scree --> cumulative explained variance vs number of principal components
+    :param pca: PCA matrix already transformed
+    :param show: plot is showed when show=1, and it is saved to png file when show=0
+    :param figwidth: figure width
+    :param figheight: figure height
+    :param name: string name to save the png file when show=0
+    :return:
+    """
     fig, ax1 = plt.subplots(figsize=(figwidth, figheight))
     ax2 = ax1.twinx()
     label1 = ax1.plot(range(1, len(pca.components_) + 1), pca.explained_variance_ratio_,
@@ -625,13 +725,33 @@ def plot_pca_scree(pca, show=0, figwidth=20, figheight=10):
     if show == 1:
         plt.show()
     else:
-        plt.savefig('PCA scree plot.png', bbox_inches='tight')
+        plt.savefig(name + '.png', bbox_inches='tight')
         plt.close()
 
 
-def pca_biplot_PC1_PC2(pca_transformed, pca, labels=None, show=0, figwidth=20, figheight=10):
+def pca_biplot_PC1_PC2(df_ini, show=0, figwidth=20, figheight=10, name='PCA biplot'):
+    """ Plot biplot between first and second principal component for the input dataframe, which is scaled and
+    transformed to PCA internally in the function
+    :param df_ini: input dataframe
+    :param show: plot is showed when show=1, and it is saved to png file when show=0
+    :param figwidth: figure width
+    :param figheight: figure height
+    :param name: string name to save the png file when show=0
+    :return:
+    """
     fig, ax = plt.subplots(figsize=(figwidth, figheight))
+    df = df_ini.copy()
+    try:
+        labels = df.columns.values.tolist()
+    except (Exception,):
+        labels = None
+    scale = StandardScaler()
+    df_std = scale.fit_transform(df)
+    pca = PCA()
+    pca_transformed = pca.fit_transform(df_std)
+    # Select the transformed values to principal components only for the first and second principal components
     score = pca_transformed[:, 0:2]
+    # Select the components (direction of maximum variance) only for the first and second principal components
     coeff = pca.components_[0:2, :]
     xs = score[:, 0]
     ys = score[:, 1]
@@ -656,11 +776,24 @@ def pca_biplot_PC1_PC2(pca_transformed, pca, labels=None, show=0, figwidth=20, f
     if show == 1:
         plt.show()
     else:
-        plt.savefig('PCA biplot.png', bbox_inches='tight')
+        plt.savefig(name + '.png', bbox_inches='tight')
         plt.close()
 
 
-def plot_first_second_pca(pca_transformed, target, val1=1, val0=0, show=0, figwidth=20, figheight=10):
+def plot_first_second_pca(pca_transformed, target, val1=1, val0=0, show=0, figwidth=20, figheight=10,
+                          name='PCA first vs second'):
+    """ Plot first vs second principal component grouping by target class (printing differently when target is val1 and
+    when target is val0, mainly considering binary classification exercises).
+    :param pca_transformed: PCA matrix already transformed
+    :param target: series target
+    :param val1: value when the target class is positive
+    :param val0: value when the target class is negative
+    :param show: plot is showed when show=1, and it is saved to png file when show=0
+    :param figwidth: figure width
+    :param figheight: figure height
+    :param name: string name to save the png file when show=0
+    :return:
+    """
     pca_transformed = pd.DataFrame(pca_transformed)
     pca_output1 = pca_transformed.loc[target == val1, :]
     pca_output0 = pca_transformed.loc[target == val0, :]
@@ -677,11 +810,23 @@ def plot_first_second_pca(pca_transformed, target, val1=1, val0=0, show=0, figwi
     if show == 1:
         plt.show()
     else:
-        plt.savefig('PCA first vs second.png', bbox_inches='tight')
+        plt.savefig(name + '.png', bbox_inches='tight')
         plt.close()
 
 
-def plot_inertia_silhouette(inertia, calinski, silhouette, show=0, figwidth=20, figheight=10):
+def plot_inertia_silhouette(inertia, calinski, silhouette, show=0, figwidth=20, figheight=10,
+                            name='Clusters Inertia Scores'):
+    """ Plot a cluster performance outcome by plotting the inertia, calinski index and silhouette
+    score vs the number of considered clusters. The purpose is to help with selecting the optimal number of clusters.
+    :param inertia: list of inertia per each number of clusters (it must start with only single cluster)
+    :param calinski: list of calinski index per each number of clusters (it must start with two clusters)
+    :param silhouette: list of silhouette score per each number of clusters (it must start with two clusters)
+    :param show: plot is showed when show=1, and it is saved to png file when show=0
+    :param figwidth: figure width
+    :param figheight: figure height
+    :param name: string name to save the png file when show=0
+    :return:
+    """
     fig, axes = plt.subplots(1, 3, figsize=(figwidth, figheight))
     max_clusters = len(inertia)
     ax = axes.ravel()
@@ -704,11 +849,20 @@ def plot_inertia_silhouette(inertia, calinski, silhouette, show=0, figwidth=20, 
     if show == 1:
         plt.show()
     else:
-        plt.savefig('Clusters Inertia Scores.png', bbox_inches='tight')
+        plt.savefig(name + '.png', bbox_inches='tight')
         plt.close()
 
 
 def plot_dendrogram(model, linkage='', show=0, figwidth=20, figheight=10):
+    """ Plot dendrogram for the introduced input fit model. Note linkage was already applied in the input fit model, and
+    so that is not in the function scope.
+    :param model: input fit model
+    :param linkage: string for type of linkage applied in the input model (only for display purposes)
+    :param show: plot is showed when show=1, and it is saved to png file when show=0
+    :param figwidth: figure width
+    :param figheight: figure height
+    :return:
+    """
     fig, ax = plt.subplots(figsize=(figwidth, figheight))
     counts = np.zeros(model.children_.shape[0])
     n_samples = len(model.labels_)
@@ -735,7 +889,20 @@ def plot_dendrogram(model, linkage='', show=0, figwidth=20, figheight=10):
         plt.close()
 
 
-def plot_cluster_features(df_ini, cluster_class, ncolumns=5, show=0, figwidth=20, figheight=10, bar_width=0.25):
+def plot_cluster_features(df_ini, cluster_class, ncolumns=5, bar_width=0.25, show=0, figwidth=20, figheight=10,
+                          name='Cluster features analysis'):
+    """ Plot the mean value of each feature in the input dataframe for each cluster class. This plot helps to identify
+    the relation grouped in each cluster class.
+    :param df_ini: input dataframe
+    :param cluster_class: list indicating the cluster class per each sample in the input dataframe
+    :param ncolumns: each feature is individually plot, and ncolumns define the number of plots in a row
+    :param bar_width: bar width in the plots
+    :param show: plot is showed when show=1, and it is saved to png file when show=0
+    :param figwidth: figure width
+    :param figheight: figure height
+    :param name: string name to save the png file when show=0
+    :return:
+    """
     n_clusters = max(cluster_class) + 1
     df = df_ini.copy().dropna()
     if isinstance(df, pd.Series):
@@ -769,11 +936,21 @@ def plot_cluster_features(df_ini, cluster_class, ncolumns=5, show=0, figwidth=20
     if show == 1:
         plt.show()
     else:
-        plt.savefig('Cluster features analysis.png', bbox_inches='tight')
+        plt.savefig(name + '.png', bbox_inches='tight')
         plt.close()
 
 
 def plot_2d_cluster(df, feat_x, feat_y, cluster_class, show=0, figwidth=20, figheight=10):
+    """ Plot feature x vs feature y grouping the samples according to the cluster they belong
+    :param df: input dataframe
+    :param feat_x: string for the name of the feature to capture in axis x
+    :param feat_y: string for the name of the feature to capture in axis y
+    :param cluster_class: list indicating the cluster class per each sample in the input dataframe
+    :param show: plot is showed when show=1, and it is saved to png file when show=0
+    :param figwidth: figure width
+    :param figheight: figure height
+    :return:
+    """
     n_clusters = max(cluster_class) + 1
     clust_count = np.zeros([n_clusters])
     for k in range(n_clusters):
@@ -796,49 +973,4 @@ def plot_2d_cluster(df, feat_x, feat_y, cluster_class, show=0, figwidth=20, figh
         plt.show()
     else:
         plt.savefig('Cluster ' + feat_x + ' vs ' + feat_y + '.png', bbox_inches='tight')
-        plt.close()
-
-
-def stationarity_test(timeseries):
-    print('\nResults of Dickey-Fuller Test:')
-    dftest = adfuller(timeseries, autolag='AIC', regression='ct')
-    dfoutput = pd.Series(dftest[0:4], index=['Test Statistic', 'p-value', '#Lags Used', 'Number of Observations Used'])
-    for key, value in dftest[4].items():
-        dfoutput['Critical Value (%s)' % key] = value
-    print(dfoutput)
-
-
-def eval_model(model, train, test, auto_arima=0, name='Model', pred=None, lags=12, show=0, figwidth=20, figheight=10):
-    if auto_arima == 0:
-        lb = np.mean(acorr_ljungbox(model.resid, lags=lags, return_df=True).lb_pvalue)
-        if pred is None:
-            pred = model.forecast(steps=len(test))
-    else:
-        lb = np.mean(acorr_ljungbox(model.resid(), lags=lags, return_df=True).lb_pvalue)
-        model.plot_diagnostics(figsize=(figwidth, figheight))
-        if show == 1:
-            plt.show()
-        else:
-            plt.savefig('Model diagnostics ' + name.upper() + '.png', bbox_inches='tight')
-            plt.close()
-        if pred is None:
-            pred = model.predict(n_periods=len(test))
-    fig, ax = plt.subplots(figsize=(figwidth, figheight))
-    ax.plot(train, label='training')
-    ax.plot(test, label='test')
-    ax.plot(pred, label='prediction')
-    ax.grid(visible=True)
-    ax.tick_params(axis='both', labelsize=10)
-    ax.set_xlabel('Timeline', fontsize=10, weight='bold')
-    ax.set_ylabel('Feature Magnitude', fontsize=10, weight='bold')
-    ax.legend(prop={'size': 10})
-    mape = round(mean_absolute_percentage_error(test, pred) * 100, 2)
-    tit = name + ":  LjungBox p-value --> " + str(lb) + "\n MAPE: " + str(mape) + "%"
-    print('\nMODEL: {}\nLJUNGBOX PVALUE: {}\nMAPE: {}'.format(name, lb, mape))
-    fig.suptitle(tit, fontsize=20, weight='bold')
-    fig.tight_layout(rect=[0.025, 0.025, 0.975, 0.975])
-    if show == 1:
-        plt.show()
-    else:
-        plt.savefig('Model evaluation ' + name.upper() + '.png', bbox_inches='tight')
         plt.close()

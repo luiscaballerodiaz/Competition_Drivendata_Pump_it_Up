@@ -128,8 +128,7 @@ def select_features(x_tr, x_ts, y_tr, sfs_model, kfeat, sco):
 
 def pipeline_gridsearch(x_tr, x_ts, y_tr, y_ts, params, sco, cv_rep, seed=0):
     time0 = time.time()
-    index_num = [x for x in range(x_tr.shape[1])]
-    param_grid = f.decode_gridsearch_params(params, index_num)
+    param_grid = f.decode_gridsearch_params(params)
     pipe = Pipeline([('preprocess', []), ('estimator', [])])
     cv = RepeatedKFold(n_splits=5, n_repeats=cv_rep, random_state=seed)  # Define the fold performance
     grid_search = GridSearchCV(pipe, param_grid, cv=cv, scoring=sco)  # Define grid search cross validation
