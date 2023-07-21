@@ -6,7 +6,7 @@ from sklearn.model_selection import GridSearchCV
 from imblearn.over_sampling import SMOTE
 
 
-def oversampling(x_tr, y_tr, samp0=0, samp1=0, samp2=0, seed=0):
+def oversampling(x_tr, y_tr, seed, samp0=0, samp1=0, samp2=0):
     # Oversampling to compensate target class imbalanced
     print('\nInitial Target Distribution: \n{}'.format(y_tr.value_counts()))
     vals = y_tr.value_counts().to_dict()
@@ -19,7 +19,7 @@ def oversampling(x_tr, y_tr, samp0=0, samp1=0, samp2=0, seed=0):
     return x_tr, y_tr
 
 
-def split_data(test_split, df, seed=0):
+def split_data(test_split, df, seed):
     y = df['Target']
     df.drop('Target', axis=1, inplace=True)
     print('\nDF SHAPE - ORIGINAL: {}'.format(df.shape))
@@ -30,7 +30,7 @@ def split_data(test_split, df, seed=0):
     return x_tr, x_ts, y_tr, y_ts, df, y
 
 
-def data_transform(x_tr, x_ts, y_tr, cat_feats, num_feats, enc, depth, sco, min_th=0.0, min_incr=0.0, deg3=0, seed=0):
+def data_transform(x_tr, x_ts, y_tr, cat_feats, num_feats, enc, depth, sco, seed, min_th=0.0, min_incr=0.0, deg3=0):
     x_tr[cat_feats] = x_tr[cat_feats].astype('category')
     x_ts[cat_feats] = x_ts[cat_feats].astype('category')
     x_tr[num_feats] = x_tr[num_feats].astype('float64')

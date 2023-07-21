@@ -40,10 +40,11 @@ samples0 = 0         # Number of samples for class 0 (when 0 the class is not mo
 samples1 = 0         # Number of samples for class 1 (when 0 the class is not modified)
 samples2 = 0         # Number of samples for class 2 (when 0 the class is not modified)
 cv_repeat = 1        # Number of cross validation repetitions in the grid search
-grid_sweep = 0       # 0 --> single model and 1 --> grid sweep
+grid_sweep = 0      # 0 --> single model and 1 --> grid sweep
 n_feats = 0          # 0 --> optimal feats disabled and >0 --> optimal feats enabled to the corresponding value
-user_feats_en = 1    # 0 --> use all feats and 1 --> use user_feats (NOTE: ignored when n_feats>0)
-user_feats = ['ward_woe_2', 'construction_year_reciprocal', 'treefeat_554_0', 'treefeat_77_2', 'scheme_name_woe_2', 'treefeat_1748_0', 'lga_woe_2', 'treefeat_95_0', 'treefeat_643_2', 'treefeat_1667_2', 'treefeat_1749_0', 'treefeat_99_2', 'treefeat_110_2', 'treefeat_93_2', 'treefeat_957_0', 'treefeat_911_0', 'treefeat_1749_2', 'treefeat_1641_2', 'treefeat_63_2', 'treefeat_556_0', 'treefeat_957_2', 'treefeat_94_0', 'treefeat_1748_2', 'treefeat_1089_0', 'treefeat_449_2', 'treefeat_90_0', 'treefeat_77_0', 'treefeat_1390_0', 'funder_woe_2', 'treefeat_95_2', 'treefeat_172_2', 'treefeat_1086_2', 'treefeat_911_2', 'treefeat_90_2', 'lga_woe_1', 'treefeat_554_2', 'treefeat_67_0', 'treefeat_85_0', 'treefeat_556_2', 'treefeat_1392_0', 'treefeat_1089_2', 'treefeat_67_2', 'treefeat_0_2', 'treefeat_85_2', 'treefeat_139_0', 'treefeat_172_0', 'treefeat_666_0', 'treefeat_937_0', 'treefeat_1642_0', 'treefeat_1390_2', 'treefeat_139_2', 'ward_woe_1', 'treefeat_31_2', 'treefeat_277_2', 'treefeat_96_0', 'treefeat_138_2', 'treefeat_15_0', 'treefeat_1642_2', 'treefeat_10_0', 'treefeat_1139_2', 'treefeat_75_0', 'treefeat_73_0', 'treefeat_25_2', 'treefeat_448_2', 'treefeat_94_2', 'treefeat_404_0', 'treefeat_158_0', 'treefeat_80_0', 'treefeat_158_2', 'treefeat_80_2', 'treefeat_96_2', 'treefeat_1085_2', 'treefeat_903_2', 'treefeat_76_0', 'source_woe_0', 'treefeat_942_0', 'treefeat_107_2', 'treefeat_367_0', 'treefeat_1319_0', 'treefeat_1244_2', 'treefeat_1099_0', 'treefeat_136_0', 'treefeat_717_0', 'treefeat_112_0', 'treefeat_155_0', 'treefeat_1299_0', 'treefeat_937_2', 'treefeat_65_0', 'treefeat_188_0', 'treefeat_1038_2', 'treefeat_896_0', 'treefeat_1700_2', 'treefeat_250_0', 'treefeat_666_2', 'treefeat_1298_2', 'treefeat_112_2', 'treefeat_986_0', 'treefeat_1691_0', 'treefeat_1536_2', 'treefeat_133_0']
+user_feats_en = 0    # 0 --> use all feats and 1 --> use user_feats (NOTE: ignored when n_feats>0)
+user_feats = []
+rng = np.random.RandomState(23)
 
 if load_data == 0:
     # Read CSV files
@@ -62,15 +63,15 @@ if load_data == 0:
     f.boxplot(df_train[fnum_ini], name='Boxplot original')
 
     # Numerical features engineering
-    df_train, feat_num, train_binning, train_models, train_transf = s1.num_feat_engineering(df_train, fnum_ini)
-    df_sub, _, _, _, _ = s1.num_feat_engineering(df_sub, fnum_ini, binning_tree=train_binning,
+    df_train, feat_num, train_binning, train_models, train_transf = s1.num_feat_engineering(df_train, fnum_ini, rng)
+    df_sub, _, _, _, _ = s1.num_feat_engineering(df_sub, fnum_ini, rng, binning_tree=train_binning,
                                                  models_predefined=train_models, num_transformations=train_transf)
 
     # Categorical features engineering
-    df_train, feat_cat, train_fout, train_cats, train_imp_dict = s1.cat_feat_engineering(df_train, feat_num,
-                                                                                         min_counts=min_occurrence)
-    df_sub, _, _, _, _ = s1.cat_feat_engineering(df_sub, feat_num, feat_out=train_fout,
-                                                 cats_predefined=train_cats, imp_dict=train_imp_dict)
+    df_train, feat_cat, train_fout, train_cats, train_imp = s1.cat_feat_engineering(df_train, feat_num,
+                                                                                    min_counts=min_occurrence)
+    df_sub, _, _, _, _ = s1.cat_feat_engineering(df_sub, feat_num, feat_out=train_fout, cats_predefined=train_cats,
+                                                 imp=train_imp)
 
     f.histogram(df_train[feat_num], target=df_train['Target'], name='Histogram after modifications')
     f.boxplot(df_train[feat_num], name='Boxplot after modifications')
@@ -97,12 +98,12 @@ if load_data <= 1:
     print(f'\nFINAL NUMBER NAN VALUES IN SUBMISSION DATAFRAME\n{df_sub.isna().sum()}\n')
 
     # Transform dataframe to train and test sets
-    x_train, x_test, y_train, y_test, x_all, y_all = s2.split_data(test_size, df_train, seed=7)
+    x_train, x_test, y_train, y_test, x_all, y_all = s2.split_data(test_size, df_train, rng)
 
     # Apply the corresponding transformations
-    x_train, x_test = s2.data_transform(x_train, x_test, y_train, feat_cat, feat_num, encoder, tree_depth, score,
+    x_train, x_test = s2.data_transform(x_train, x_test, y_train, feat_cat, feat_num, encoder, tree_depth, score, rng,
                                         min_th=min_threshold, min_incr=min_increase, deg3=cubic)
-    x_all, x_sub = s2.data_transform(x_all, df_sub, y_all, feat_cat, feat_num, encoder, tree_depth, score,
+    x_all, x_sub = s2.data_transform(x_all, df_sub, y_all, feat_cat, feat_num, encoder, tree_depth, score, rng,
                                      min_th=min_threshold, min_incr=min_increase, deg3=cubic)
 
     id_sub.to_csv('id_sub.csv', index=False)
@@ -128,13 +129,13 @@ elif load_data <= 2:
     id_sub = pd.read_csv('id_sub.csv')
     id_sub = id_sub.iloc[:, 0]
 
-x_train, y_train = s2.oversampling(x_train, y_train, samples0, samples1, samples2)
+x_train, y_train = s2.oversampling(x_train, y_train, rng, samples0, samples1, samples2)
 y_all = np.array(y_all)
 y_train = np.array(y_train)
 y_test = np.array(y_test)
 
 # Define the parameters grid for each simulated model
-gridsearch_params, estimator_model = s3.get_sim_params(sim_model, grid_sweep)
+gridsearch_params, estimator_model = s3.get_sim_params(sim_model, grid_sweep, rng)
 
 if n_feats > 0:
     x_train, x_test, feat_optimal = s3.select_features(x_train, x_test, y_train, estimator_model, n_feats, score)
@@ -152,7 +153,7 @@ print('TRAIN SELECTED FEATURES: {}\n'.format(x_train.columns.values.tolist()))
 
 # Apply grid search
 pd_grid, best_train_model = s3.pipeline_gridsearch(
-    x_train, x_test, y_train, y_test, gridsearch_params, score, cv_repeat)
+    x_train, x_test, y_train, y_test, gridsearch_params, score, cv_repeat, rng)
 sweep.param_sweep_matrix(params=pd_grid['params'], test_score=pd_grid['mean_test_score'])
 
 # Submission generation with model referred to all data

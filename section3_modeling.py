@@ -10,12 +10,17 @@ from sklearn.pipeline import Pipeline
 from mlxtend.feature_selection import SequentialFeatureSelector as SFS_mlxtend
 
 
-def get_sim_params(algorithm, sweep_en, seed=0):
+def get_sim_params(algorithm, sweep_en, seed):
     grid_params = ['']
     if 'gradient' in algorithm.lower():
         grid_params = [{'preprocess': [''], 'estimator': ['gradient boosting'], 'estimator__n_estimators': [100],
                         'estimator__max_depth': [8], 'estimator__learning_rate': [0.2],
                         'estimator__random_state': [seed]}]
+    elif 'extra' in algorithm.lower():
+        grid_params = [{'preprocess': [''], 'estimator': ['extra'], 'estimator__n_estimators': [300],
+                        'estimator__min_samples_leaf': [25], 'estimator__max_depth': [20],
+                        'estimator__max_leaf_nodes': [100], 'estimator__max_features': ['sqrt'],
+                        'estimator__bootstrap': [False], 'estimator__n_jobs': [-1], 'estimator__random_state': [seed]}]
     elif 'random' in algorithm.lower() or 'forest' in algorithm.lower():
         grid_params = [{'preprocess': [''], 'estimator': ['random forest'], 'estimator__n_jobs': [-1],
                         'estimator__n_estimators': [300], 'estimator__max_depth': [15],
@@ -58,13 +63,19 @@ def get_sim_params(algorithm, sweep_en, seed=0):
             grid_params = [{'preprocess': [''], 'estimator': ['gradient boosting'], 'estimator__random_state': [seed],
                             'estimator__n_estimators': [25, 35, 50, 65, 80, 100], 'estimator__max_depth': [3, 4, 5, 6],
                             'estimator__learning_rate': [0.01, 0.05, 0.1, 0.2, 0.35, 0.5]}]
+        elif 'extra' in algorithm.lower():
+            grid_params = [{'preprocess': [''], 'estimator': ['extra'], 'estimator__n_estimators': [100, 200, 300],
+                            'estimator__min_samples_leaf': [25, 40, 60, 80, 100], 'estimator__n_jobs': [-1],
+                            'estimator__max_depth': [10, 16, 23, 30, 40], 'estimator__max_features': ['sqrt'],
+                            'estimator__max_leaf_nodes': [25, 40, 60, 80, 100], 'estimator__bootstrap': [False],
+                            'estimator__random_state': [seed]}]
         elif 'random' in algorithm.lower() or 'forest' in algorithm.lower():
             grid_params = [{'preprocess': [''], 'estimator': ['random forest'], 'estimator__n_jobs': [-1],
                             'estimator__n_estimators': [100, 200, 300], 'estimator__max_depth': [5, 8, 12, 16, 20, 25],
                             'estimator__max_features': [30, 40, 50, 60, 70, 80]}]
         elif 'lightgbm' in algorithm.lower() or 'light' in algorithm.lower():
             grid_params = [{'preprocess': [''], 'estimator': ['lightgbm'],
-                            'estimator__n_estimators': [100, 200], 'estimator__learning_rate': [0.1, 0.2],
+                            'estimator__n_estimators': [300], 'estimator__learning_rate': [0.1, 0.2],
                             'estimator__num_leaves': [35, 60, 85, 110, 135],
                             'estimator__max_depth': [10, 20, 30, 40],
                             'estimator__boosting_type': ['dart'], 'estimator__reg_alpha': [0.05],
@@ -126,7 +137,7 @@ def select_features(x_tr, x_ts, y_tr, sfs_model, kfeat, sco):
     return x_tr, x_ts, opt_feats
 
 
-def pipeline_gridsearch(x_tr, x_ts, y_tr, y_ts, params, sco, cv_rep, seed=0):
+def pipeline_gridsearch(x_tr, x_ts, y_tr, y_ts, params, sco, cv_rep, seed):
     time0 = time.time()
     param_grid = f.decode_gridsearch_params(params)
     pipe = Pipeline([('preprocess', []), ('estimator', [])])

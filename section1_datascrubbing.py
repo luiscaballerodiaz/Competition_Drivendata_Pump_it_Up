@@ -17,7 +17,7 @@ def dataframe_overview(df):
     print('\nTarget distribution: \n{}'.format(target_dist))
 
 
-def num_feat_engineering(df, num_feats, binning_tree=None, models_predefined=None, num_transformations=None, seed=0):
+def num_feat_engineering(df, num_feats, seed, binning_tree=None, models_predefined=None, num_transformations=None):
     print('\n')
     fnum = num_feats.copy()
 
@@ -144,7 +144,7 @@ def num_feat_engineering(df, num_feats, binning_tree=None, models_predefined=Non
     return df, fnum, binning_tree, models, transf
 
 
-def cat_feat_engineering(df, fnum, min_counts=1, cats_predefined=None, feat_out=None, imp_dict=None):
+def cat_feat_engineering(df, fnum, min_counts=1, cats_predefined=None, feat_out=None, imp=None):
     print('\n')
     fcat = [i for i in df.columns.values.tolist() if i not in fnum]
     df[fcat] = df[fcat].astype('category')
@@ -169,6 +169,14 @@ def cat_feat_engineering(df, fnum, min_counts=1, cats_predefined=None, feat_out=
     df.drop(feat2, axis=1, inplace=True)
     fcat.remove(feat2)
 
+    # MANAGEMENT FEATURE
+    feat1 = 'management'
+    feat2 = 'management_group'
+    print('\nValue counts for feature {}: \n{}'.format(feat1, df[feat1].value_counts()))
+    print('Value counts for feature {}: \n{}'.format(feat2, df[feat2].value_counts()))
+    df.drop(feat2, axis=1, inplace=True)
+    fcat.remove(feat2)
+
     # PAYMENT FEATURE
     feat1 = 'payment'
     feat2 = 'payment_type'
@@ -182,7 +190,7 @@ def cat_feat_engineering(df, fnum, min_counts=1, cats_predefined=None, feat_out=
     # WATER FEATURE
     feat1 = 'water_quality'
     feat2 = 'quality_group'
-    df[feat1].replace({'soft': 'good'}, inplace=True)
+    df[feat1].replace({'soft': 'good', 'fluoride abandoned': 'fluoride'}, inplace=True)
     print('\nValue counts for feature {}: \n{}'.format(feat1, df[feat1].value_counts()))
     print('Value counts for feature {}: \n{}'.format(feat2, df[feat2].value_counts()))
     df.drop(feat2, axis=1, inplace=True)
@@ -191,6 +199,8 @@ def cat_feat_engineering(df, fnum, min_counts=1, cats_predefined=None, feat_out=
     # WATERPOINT FEATURE
     feat1 = 'waterpoint_type'
     feat2 = 'waterpoint_type_group'
+    df[feat1].replace({'dam': 'other'}, inplace=True)
+    df[feat2].replace({'dam': 'other'}, inplace=True)
     print('\nValue counts for feature {}: \n{}'.format(feat1, df[feat1].value_counts()))
     print('Value counts for feature {}: \n{}'.format(feat2, df[feat2].value_counts()))
     df.drop(feat2, axis=1, inplace=True)
@@ -208,9 +218,9 @@ def cat_feat_engineering(df, fnum, min_counts=1, cats_predefined=None, feat_out=
     fcat.remove(feat3)
 
     # EXTRACTION FEATURE
-    feat1 = 'extraction_type'
-    feat2 = 'extraction_type_group'
-    feat3 = 'extraction_type_class'
+    feat1 = 'extraction_type_group'
+    feat2 = 'extraction_type_class'
+    feat3 = 'extraction_type'
     print('\nValue counts for feature {}: \n{}'.format(feat1, df[feat1].value_counts()))
     print('Value counts for feature {}: \n{}'.format(feat2, df[feat2].value_counts()))
     print('Value counts for feature {}: \n{}'.format(feat3, df[feat3].value_counts()))
@@ -218,22 +228,36 @@ def cat_feat_engineering(df, fnum, min_counts=1, cats_predefined=None, feat_out=
     fcat.remove(feat2)
     fcat.remove(feat3)
 
+    # REGION CODE FEATURE
+    feat = 'region_code'
+    print('\nValue counts for feature {}: \n{}'.format(feat, df[feat].value_counts()))
+    df[feat].replace({40: 60}, inplace=True)
+
+    # REGION, DISTRICT CODE, BASIN FEATURES
+    feat = 'region'
+    print('\nValue counts for feature {}: \n{}'.format(feat, df[feat].value_counts()))
+    feat = 'basin'
+    print('\nValue counts for feature {}: \n{}'.format(feat, df[feat].value_counts()))
+    feat = 'district_code'
+    print('\nValue counts for feature {}: \n{}'.format(feat, df[feat].value_counts()))
+
+    # UNKNOWN CATEGORIES
+    for feat in fcat:
+        df[feat].replace({('Unknown', 'unknown'): np.nan}, inplace=True)
+
+    # FUNDER, WPT NAME, INSTALLER AND SCHEME NAME FEATURES
     df['funder'].replace({'0': np.nan}, inplace=True)
     df['installer'].replace({('0', '-'): np.nan}, inplace=True)
     df['wpt_name'].replace({('24', '21'): np.nan}, inplace=True)
-    df['region_code'].replace({40: 60}, inplace=True)
-    for feat in fcat:
-        df[feat].replace({('Unknown', 'unknown'): np.nan}, inplace=True)
     feats = ['funder', 'installer', 'wpt_name', 'scheme_name']
     for feat in feats:
         df[feat] = df[feat].apply(lambda row: row.replace('_', '').replace(' ', '').replace('/', ''))
         df[feat] = df[feat].apply(lambda row: '_' + str(row)[:3].lower() + '_' if row is not np.nan else row)
 
+    # Reduce number of categories by grouping the categories with low occurrence
     if feat_out is not None:
         df.drop(feat_out, axis=1, inplace=True)
         fcat = [x for x in fcat if x not in feat_out]
-
-    # Reduce number of categories by grouping the categories with low occurrence
     df, fcat, cats, fout = f.reduce_categories(df, fcat, min_counts, cat_predefined=cats_predefined)
     f.value_counts_barplot(df, fcat, name=plot_name)
 
@@ -243,17 +267,40 @@ def cat_feat_engineering(df, fnum, min_counts=1, cats_predefined=None, feat_out=
     # IMPUTER SUBVILLAGE per WARD
     df['subvillage'].fillna(df['ward'], inplace=True)
 
-    # IMPUTER CATEGORICAL FEATURES with most common category per BASIN (most meaningful feature with no missing values)
-    print(df['region_code'].value_counts())
-    print(df['district_code'].value_counts())
-    print(df['region'].value_counts())
-    print(df['basin'].value_counts())
-    ref = 'basin'
-    feats = ['funder', 'installer', 'scheme_name', 'scheme_management', 'management', 'management_group', 'payment',
-             'water_quality', 'quantity', 'source']
-    if imp_dict is None:
-        imp_dict = df.groupby(ref)[feats].agg(pd.Series.mode).to_dict()
-    for feat in feats:
-        df[feat] = df.apply(lambda row: imp_dict[feat][row[ref]] if row[feat] is np.nan else row[feat], axis=1)
+    # IMPUTER CATEGORICAL FEATURES with non-null features
+    f_na = []
+    for feat in fcat:
+        if df[feat].isna().sum() > 0:
+            f_na.append(feat)
+    # print(df['region_code'].value_counts())
+    # print(df['district_code'].value_counts())
+    # print(df['region'].value_counts())
+    # print(df['basin'].value_counts())
+    # df[fcat] = df[fcat].astype('category')
+    # ref = 'basin'
+    # if imp1 is None:
+    #     imp1 = df.groupby(ref)[f_na].agg(pd.Series.mode).to_dict()
+    #     imp2 = None
+    #     imp3 = None
+    # for feat in f_na:
+    #     df[feat] = df.apply(lambda row: imp1[feat][row[ref]] if row[feat] is np.nan else row[feat], axis=1)
 
-    return df, fcat, fout, cats, imp_dict
+    # IMPUTER CATEGORICAL FEATURES with most common category among the cases matching the non-null features
+    print('\n{}'.format(df['basin'].value_counts()))
+    refs1 = ['basin', 'region', 'region_code', 'district_code']
+    refs2 = ['basin', 'region', 'extraction_type_group', 'waterpoint_type']
+    refs3 = ['basin', 'region']
+    refs4 = 'basin'
+    df[fcat] = df[fcat].astype('category')
+    if imp is None:
+        imp = [df.groupby(refs1)[f_na].agg(lambda x: x.mode().tolist()[0] if not x.mode().empty else np.nan).to_dict(),
+               df.groupby(refs2)[f_na].agg(lambda x: x.mode().tolist()[0] if not x.mode().empty else np.nan).to_dict(),
+               df.groupby(refs3)[f_na].agg(lambda x: x.mode().tolist()[0] if not x.mode().empty else np.nan).to_dict(),
+               df.groupby(refs4)[f_na].agg(lambda x: x.mode().tolist()[0] if not x.mode().empty else np.nan).to_dict()]
+    for fe in f_na:
+        df[fe] = df.apply(lambda r: imp[0][fe][tuple(r[refs1])] if r[fe] is np.nan else r[fe], axis=1)
+        df[fe] = df.apply(lambda r: imp[1][fe][tuple(r[refs2])] if r[fe] is np.nan else r[fe], axis=1)
+        df[fe] = df.apply(lambda r: imp[2][fe][tuple(r[refs3])] if r[fe] is np.nan else r[fe], axis=1)
+        df[fe] = df.apply(lambda r: imp[3][fe][r[refs4]] if r[fe] is np.nan else r[fe], axis=1)
+
+    return df, fcat, fout, cats, imp

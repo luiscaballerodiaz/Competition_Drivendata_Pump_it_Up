@@ -18,6 +18,7 @@ from sklearn.naive_bayes import BernoulliNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.svm import SVC
 from sklearn.decomposition import PCA
 from sklearn.neural_network import MLPClassifier
@@ -560,6 +561,8 @@ def create_model(algorithm):
         model = MultinomialNB()
     elif 'tree' in algorithm.lower():
         model = DecisionTreeClassifier()
+    elif 'extra' in algorithm.lower():
+        model = ExtraTreesClassifier()
     elif 'forest' in algorithm.lower() or 'random' in algorithm.lower():
         model = RandomForestClassifier()
     elif 'gradient' in algorithm.lower() or 'boosting' in algorithm.lower():
