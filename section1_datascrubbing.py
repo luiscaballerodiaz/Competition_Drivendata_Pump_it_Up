@@ -272,20 +272,6 @@ def cat_feat_engineering(df, fnum, min_counts=1, cats_predefined=None, feat_out=
     for feat in fcat:
         if df[feat].isna().sum() > 0:
             f_na.append(feat)
-    # print(df['region_code'].value_counts())
-    # print(df['district_code'].value_counts())
-    # print(df['region'].value_counts())
-    # print(df['basin'].value_counts())
-    # df[fcat] = df[fcat].astype('category')
-    # ref = 'basin'
-    # if imp1 is None:
-    #     imp1 = df.groupby(ref)[f_na].agg(pd.Series.mode).to_dict()
-    #     imp2 = None
-    #     imp3 = None
-    # for feat in f_na:
-    #     df[feat] = df.apply(lambda row: imp1[feat][row[ref]] if row[feat] is np.nan else row[feat], axis=1)
-
-    # IMPUTER CATEGORICAL FEATURES with most common category among the cases matching the non-null features
     print('\n{}'.format(df['basin'].value_counts()))
     refs1 = ['basin', 'region', 'region_code', 'district_code']
     refs2 = ['basin', 'region', 'extraction_type_group', 'waterpoint_type']
