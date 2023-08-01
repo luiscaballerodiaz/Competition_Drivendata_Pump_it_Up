@@ -27,6 +27,10 @@ def split_data(test_split, df, seed):
 
     # Create training and testing sets keeping target distribution same as original
     x_tr, x_ts, y_tr, y_ts = train_test_split(df, y, test_size=test_split, shuffle=True, stratify=y, random_state=seed)
+    x_tr.reset_index(drop=True, inplace=True)
+    x_ts.reset_index(drop=True, inplace=True)
+    y_tr.reset_index(drop=True, inplace=True)
+    y_ts.reset_index(drop=True, inplace=True)
     return x_tr, x_ts, y_tr, y_ts, df, y
 
 

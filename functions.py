@@ -133,15 +133,13 @@ def categorical_encoder(encoder, feat_cat, x_train, x_test, y_train=None, remove
                 x1[feat] = x_train[feat].map(counts)
                 x2[feat] = x_test[feat].map(counts)
         elif encoder == 'onehot':
-            onehot = OneHotEncoder(drop='if binary', sparse_output=False, handle_unknown='ignore')
-            enc = ColumnTransformer(transformers=[('onehot', onehot, feat_cat)], remainder='passthrough')
+            onehot = OneHotEncoder(drop='if_binary', sparse_output=False, handle_unknown='ignore')
             x_train[feat_cat] = x_train[feat_cat].astype('string')
             x_test[feat_cat] = x_test[feat_cat].astype('string')
-            x1 = enc.fit_transform(x_train[feat_cat])
-            oh_list = enc.get_feature_names_out()
-            oh_list = [x.replace('onehot__', '').replace('remainder__', '') for x in oh_list]
+            x1 = onehot.fit_transform(x_train[feat_cat])
+            oh_list = onehot.get_feature_names_out()
             x1 = pd.DataFrame(x1, columns=oh_list)
-            x2 = enc.transform(x_test[feat_cat])
+            x2 = onehot.transform(x_test[feat_cat])
             x2 = pd.DataFrame(x2, columns=oh_list)
         else:
             sys.exit('ERROR: NO CATEGORICAL ENCODER WAS SELECTED')
