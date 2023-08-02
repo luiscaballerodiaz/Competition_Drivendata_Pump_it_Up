@@ -34,7 +34,9 @@ def num_feat_engineering(df, num_feats, seed, binning_tree=None, models_predefin
     df[feat] = df['X']
     df.drop('X', axis=1, inplace=True)
     fnum.append(feat)
-    df = f.manage_outliers(df, feat)
+    if binning_tree is None:
+        f.boxplot(df['date_recorded'], name='Boxplot date_recorded original')
+    df[feat] = f.manage_outliers(df, feat, method=1)
 
     # CONVERT 0 TO NAN
     df['latitude'].replace({-2E-08: 0}, inplace=True)

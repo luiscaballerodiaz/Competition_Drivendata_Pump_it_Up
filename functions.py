@@ -102,7 +102,11 @@ def categorical_encoder(encoder, feat_cat, x_train, x_test, y_train=None, remove
                 woe.set_index('Value', inplace=True)
                 x1[feat] = x_train[feat].map(woe['WoE'])
                 x2[feat] = x_test[feat].map(woe['WoE'])
-            x1.columns = [x + '_' + encoder + '_' + str(i) for x in x1.columns]
+                x2[feat].replace(np.nan, 0, inplace=True)
+            if len(combs) == 1:
+                x1.columns = [x + '_' + encoder for x in x1.columns]
+            else:
+                x1.columns = [x + '_' + encoder + '_' + str(i) for x in x1.columns]
             x2.columns = x1.columns
             x_train = pd.concat([x_train, x1], axis=1)
             x_test = pd.concat([x_test, x2], axis=1)
@@ -192,19 +196,42 @@ def reduce_categories(df, fcat, min_counts=1, cat_predefined=None):
     return df, fcat, categories, fout
 
 
-def manage_outliers(df, feat):
-    """ Limit the samples of the feature between 3 std dev or q1/3 -/+ 1.5 IQR
+def manage_outliers(df, feat_list, method=0, max_quantile=0.99, min_quantile=0.01):
+    """ Collapse the outliers to the corresponding max and min values
+    :param min_quantile: minimum quantile to consider outlier lower than that
+    :param max_quantile: maximum quantile to consider outlier higher than that
     :param df: input dataframe
-    :param feat: feature to be updated having managed the outliers
+    :param feat_list: feature to be updated having managed the outliers
+    :param method: criterion to define the collision limits
+                    if 0 --> it uses mean +- 3 std
+                    if 1 --> it uses 1.5 * IQR
+                    if 2 --> it uses quantile max_quantile (no lower limit)
+                    if 3 --> it uses quantile min_quantile (no higher limit)
+                    if 4 --> it uses the range between quantile min_quantile and max_quantile
     :return:
     """
-    q3 = df[feat].quantile(0.75)
-    q1 = df[feat].quantile(0.25)
-    std_dev = df[feat].std()
-    lower = min(q1 - 1.5 * (q3 - q1), np.mean(df[feat]) - 3 * std_dev)
-    higher = max(q3 + 1.5 * (q3 - q1), np.mean(df[feat]) + 3 * std_dev)
-    df[feat] = df[feat].apply(lambda row: min(max(row, lower), higher))
-    return df
+    if not isinstance(feat_list, list):
+        feat_list = [feat_list]
+    for feat in feat_list:
+        if method == 0:
+            lower = np.mean(df[feat]) - 3 * df[feat].std()
+            higher = np.mean(df[feat]) + 3 * df[feat].std()
+        elif method == 1:
+            q3 = df[feat].quantile(0.75)
+            q1 = df[feat].quantile(0.25)
+            lower = q1 - 1.5 * (q3 - q1)
+            higher = q3 + 1.5 * (q3 - q1)
+        elif method == 2:
+            lower = -np.inf
+            higher = df[feat].quantile(max_quantile)
+        elif method == 3:
+            lower = df[feat].quantile(min_quantile)
+            higher = np.inf
+        elif method == 4:
+            lower = df[feat].quantile(min_quantile)
+            higher = df[feat].quantile(max_quantile)
+        df[feat] = df[feat].apply(lambda row: min(max(row, lower), higher))
+    return df[feat_list]
 
 
 def remove_low_significant_feats(x_train, x_test, y_train, min_th=0, vcramer=True, corr=True):
