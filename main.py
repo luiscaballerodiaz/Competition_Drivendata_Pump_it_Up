@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import functions as f
+import tarea_functions as f
 import section1_datascrubbing as s1
 import section2_featengineering as s2
 import section3_modeling as s3

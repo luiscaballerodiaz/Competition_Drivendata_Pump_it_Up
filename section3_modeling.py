@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import time
-import functions as f
+import tarea_functions as f
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.preprocessing import StandardScaler

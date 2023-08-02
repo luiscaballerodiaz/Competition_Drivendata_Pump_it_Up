@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import functions as f
+import tarea_functions as f
 from sklearn.preprocessing import PowerTransformer
 from feature_engine.discretisation import DecisionTreeDiscretiser
 from sklearn.impute import KNNImputer
