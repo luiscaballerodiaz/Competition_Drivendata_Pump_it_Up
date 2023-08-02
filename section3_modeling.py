@@ -173,7 +173,7 @@ def generate_submission(model, x_tr, y_tr, x_ts, id_ts):
     df_submission['status_group'] = model.predict(x_ts)
     df_submission['status_group'].replace({2: 'functional', 1: 'functional needs repair', 0: 'non functional'},
                                           inplace=True)
-    df_submission.to_csv('SubmissionIDE.csv', index=False)
+    df_submission.to_csv('Submission.csv', index=False)
     try:
         index = np.argsort(-model['estimator'].feature_importances_)
         print('Important ALL feats: {}'.format([x_tr.columns.values.tolist()[x] for x in index[:100]]))
